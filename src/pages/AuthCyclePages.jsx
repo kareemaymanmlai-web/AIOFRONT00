@@ -1,9 +1,12 @@
-import { Globe2, KeyRound, Mail, ShieldCheck, UserPlus } from "lucide-react";
+import { ArrowRight, Globe2, KeyRound, Mail, ShieldCheck, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "../components/Button";
 import { Card } from "../components/Card";
 import { FormField } from "../components/FormField";
+import { OtpInput } from "../components/OtpInput";
+import { PasswordField } from "../components/PasswordField";
+import { ResendCode } from "../components/ResendCode";
 import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useToast } from "../contexts/ToastContext";
@@ -19,6 +22,10 @@ export function CreateAccountPage() {
 
   const submit = async (event) => {
     event.preventDefault();
+    if (form.password.length < 8) {
+      showToast("كلمة المرور يجب ألا تقل عن 8 أحرف", "danger");
+      return;
+    }
     if (form.password !== form.confirm) {
       showToast("كلمتا المرور غير متطابقتين", "danger");
       return;
@@ -38,12 +45,28 @@ export function CreateAccountPage() {
   return (
     <AuthScreen>
       <AuthHeader icon={<UserPlus size={22} />} title="إنشاء حساب جديد" subtitle="أنشئ حساباً شخصياً أولاً، وبعدها يمكن للشركة دعوتك على نفس البريد." />
-      <form className="form-grid" onSubmit={submit}>
-        <FormField label="الاسم الكامل"><input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required /></FormField>
-        <FormField label="البريد الإلكتروني"><input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required /></FormField>
-        <FormField label="كلمة المرور"><input type="password" minLength={8} value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} required /></FormField>
-        <FormField label="تأكيد كلمة المرور"><input type="password" minLength={8} value={form.confirm} onChange={(event) => setForm({ ...form, confirm: event.target.value })} required /></FormField>
-        <Button className="full-width" type="submit" disabled={loading}>{loading ? "جاري الإنشاء..." : "إنشاء حساب"}</Button>
+      <form className="form-grid" onSubmit={submit} noValidate>
+        <FormField label="الاسم الكامل">
+          <div className="stitch-input">
+            <input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required />
+          </div>
+        </FormField>
+        <FormField label="البريد الإلكتروني">
+          <div className="stitch-input">
+            <input type="email" autoComplete="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required />
+            <Mail size={18} />
+          </div>
+        </FormField>
+        <FormField label="كلمة المرور">
+          <PasswordField value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} minLength={8} autoComplete="new-password" />
+        </FormField>
+        <FormField label="تأكيد كلمة المرور" error={form.confirm && form.confirm !== form.password ? "كلمتا المرور غير متطابقتين" : ""}>
+          <PasswordField value={form.confirm} onChange={(event) => setForm({ ...form, confirm: event.target.value })} minLength={8} autoComplete="new-password" />
+        </FormField>
+        <Button className="full-width" type="submit" disabled={loading} aria-busy={loading}>
+          {loading ? <span className="btn-spinner" aria-hidden="true" /> : null}
+          {loading ? "جاري الإنشاء..." : "إنشاء حساب"}
+        </Button>
         <div className="auth-footnote"><span>لديك حساب بالفعل؟</span><Link to="/login">تسجيل الدخول</Link></div>
       </form>
     </AuthScreen>
@@ -56,13 +79,17 @@ export function VerifyEmailPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const email = searchParams.get("email") || "";
-  const [otp, setOtp] = useState("123456");
+  const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
 
   if (user) return <Navigate to={user.tenantId ? `/${user.role}` : "/no-workspace"} replace />;
 
   const submit = async (event) => {
     event.preventDefault();
+    if (otp.length < 6) {
+      showToast("أدخل الرمز المكون من 6 أرقام كاملاً", "danger");
+      return;
+    }
     setLoading(true);
     try {
       const nextUser = await verifyRegistrationOtp({ email, otp });
@@ -75,13 +102,23 @@ export function VerifyEmailPage() {
     }
   };
 
+  const resend = async () => {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    showToast("تم إرسال رمز جديد إلى بريدك (رمز التجربة: 123456)");
+  };
+
   return (
     <AuthScreen>
       <AuthHeader icon={<ShieldCheck size={22} />} title="التحقق من الهوية" subtitle={`أدخل رمز التحقق المرسل إلى ${email || "بريدك الإلكتروني"}. رمز التجربة: 123456`} />
-      <form className="form-grid" onSubmit={submit}>
-        <div className="otp-boxes" aria-hidden="true">{Array.from({ length: 6 }).map((_, index) => <span key={index}>{otp[index] || ""}</span>)}</div>
-        <FormField label="رمز التحقق"><input inputMode="numeric" maxLength={6} value={otp} onChange={(event) => setOtp(event.target.value)} required /></FormField>
-        <Button className="full-width" type="submit" disabled={loading}>{loading ? "جاري التحقق..." : "تأكيد البريد"}</Button>
+      <form className="form-grid" onSubmit={submit} noValidate>
+        <OtpInput value={otp} onChange={setOtp} />
+        <Button className="full-width" type="submit" disabled={loading || otp.length < 6} aria-busy={loading}>
+          {loading ? <span className="btn-spinner" aria-hidden="true" /> : null}
+          {loading ? "جاري التحقق..." : "تأكيد البريد"}
+        </Button>
+        <div className="auth-footnote-row">
+          <ResendCode onResend={resend} />
+        </div>
       </form>
     </AuthScreen>
   );
@@ -111,34 +148,55 @@ export function ForgotPasswordPage() {
   return (
     <AuthScreen>
       <AuthHeader icon={<Mail size={22} />} title="نسيت كلمة المرور؟" subtitle="أدخل بريدك الإلكتروني وسنرسل لك رمزاً لإعادة تعيين كلمة المرور." />
-      <form className="form-grid" onSubmit={submit}>
-        <FormField label="البريد الإلكتروني"><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></FormField>
-        <Button className="full-width" type="submit" disabled={loading}>{loading ? "جاري الإرسال..." : "إرسال رابط التعيين"}</Button>
-        <Button as={Link} to="/login" variant="ghost">العودة لتسجيل الدخول</Button>
+      <form className="form-grid" onSubmit={submit} noValidate>
+        <FormField label="البريد الإلكتروني">
+          <div className="stitch-input">
+            <input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+            <Mail size={18} />
+          </div>
+        </FormField>
+        <Button className="full-width" type="submit" disabled={loading} aria-busy={loading}>
+          {loading ? <span className="btn-spinner" aria-hidden="true" /> : null}
+          {loading ? "جاري الإرسال..." : "إرسال رمز التعيين"}
+        </Button>
+        <Button as={Link} to="/login" variant="ghost" className="full-width">
+          <ArrowRight size={16} /> العودة لتسجيل الدخول
+        </Button>
       </form>
     </AuthScreen>
   );
 }
 
 export function ResetPasswordPage() {
-  const { resetPassword } = useAuth();
+  const { resetPassword, requestPasswordReset } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const email = searchParams.get("email") || "";
-  const [form, setForm] = useState({ otp: "123456", password: "12345678", confirm: "12345678" });
+  const [otp, setOtp] = useState("");
+  const [form, setForm] = useState({ password: "", confirm: "" });
   const [loading, setLoading] = useState(false);
+
+  if (!email) return <Navigate to="/forgot-password" replace />;
 
   const submit = async (event) => {
     event.preventDefault();
+    if (otp.length < 6) {
+      showToast("أدخل الرمز المكون من 6 أرقام كاملاً", "danger");
+      return;
+    }
+    if (form.password.length < 8) {
+      showToast("كلمة المرور يجب ألا تقل عن 8 أحرف", "danger");
+      return;
+    }
     if (form.password !== form.confirm) {
       showToast("كلمتا المرور غير متطابقتين", "danger");
       return;
     }
     setLoading(true);
     try {
-      await resetPassword({ email, otp: form.otp, password: form.password });
-      showToast("تم تحديث كلمة المرور");
+      await resetPassword({ email, otp, password: form.password });
+      showToast("تم تحديث كلمة المرور بنجاح");
       navigate("/login", { replace: true });
     } catch (error) {
       showToast(error.message || "تعذر تحديث كلمة المرور", "danger");
@@ -147,23 +205,43 @@ export function ResetPasswordPage() {
     }
   };
 
+  const resend = async () => {
+    await requestPasswordReset({ email });
+    showToast("تم إرسال رمز جديد إلى بريدك");
+  };
+
   return (
     <AuthScreen>
-      <AuthHeader icon={<KeyRound size={22} />} title="تعيين كلمة مرور جديدة" subtitle={`استخدم الرمز المرسل إلى ${email || "بريدك الإلكتروني"}. رمز التجربة: 123456`} />
-      <form className="form-grid" onSubmit={submit}>
-        <FormField label="رمز إعادة التعيين"><input inputMode="numeric" value={form.otp} onChange={(event) => setForm({ ...form, otp: event.target.value })} required /></FormField>
-        <FormField label="كلمة المرور الجديدة"><input type="password" minLength={8} value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} required /></FormField>
-        <FormField label="تأكيد كلمة المرور"><input type="password" minLength={8} value={form.confirm} onChange={(event) => setForm({ ...form, confirm: event.target.value })} required /></FormField>
-        <div className="password-requirements"><strong>المتطلبات الأساسية</strong><span>8 أحرف على الأقل</span><span>يفضل استخدام أرقام ورموز</span></div>
-        <Button className="full-width" type="submit" disabled={loading}>{loading ? "جاري الحفظ..." : "حفظ كلمة المرور"}</Button>
+      <AuthHeader icon={<KeyRound size={22} />} title="تعيين كلمة مرور جديدة" subtitle={`استخدم الرمز المرسل إلى ${email}. رمز التجربة: 123456`} />
+      <form className="form-grid" onSubmit={submit} noValidate>
+        <OtpInput value={otp} onChange={setOtp} />
+        <div className="auth-footnote-row">
+          <ResendCode onResend={resend} />
+        </div>
+        <FormField label="كلمة المرور الجديدة">
+          <PasswordField value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} minLength={8} autoComplete="new-password" />
+        </FormField>
+        <FormField label="تأكيد كلمة المرور" error={form.confirm && form.confirm !== form.password ? "كلمتا المرور غير متطابقتين" : ""}>
+          <PasswordField value={form.confirm} onChange={(event) => setForm({ ...form, confirm: event.target.value })} minLength={8} autoComplete="new-password" />
+        </FormField>
+        <div className="password-requirements">
+          <strong>المتطلبات الأساسية</strong>
+          <span>8 أحرف على الأقل</span>
+          <span>يفضل استخدام أرقام ورموز</span>
+        </div>
+        <Button className="full-width" type="submit" disabled={loading} aria-busy={loading}>
+          {loading ? <span className="btn-spinner" aria-hidden="true" /> : null}
+          {loading ? "جاري الحفظ..." : "حفظ كلمة المرور"}
+        </Button>
       </form>
     </AuthScreen>
   );
 }
 
 function AuthScreen({ children }) {
+  const { language } = useLanguage();
   return (
-    <main className="stitch-auth-page" dir="rtl">
+    <main className="stitch-auth-page" dir={language === "ar" ? "rtl" : "ltr"}>
       <AuthTopbar />
       <Card className="login-card stitch-auth-card">{children}</Card>
       <AuthFooter />

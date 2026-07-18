@@ -85,7 +85,7 @@ function DataGate({ app }) {
     return {
       endUser: { rooms: data.rooms, files: data.files, notifications: data.notifications, analytics: data.endAnalytics },
       tenant: { rooms: data.rooms, files: data.files, members: data.members, notifications: data.notifications, analytics: data.tenantAnalytics },
-      platform: { tenants: data.tenants, analytics: data.platformAnalytics }
+      platform: { tenants: data.tenants, notifications: data.notifications, analytics: data.platformAnalytics }
     };
   }, [data]);
 

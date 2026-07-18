@@ -1,4 +1,4 @@
-import { AlertTriangle, Building2, CreditCard, Download, MoreVertical, Plus, Shield, TrendingUp, Users } from "lucide-react";
+import { AlertTriangle, Bell, Building2, CreditCard, Download, MoreVertical, Plus, Shield, TrendingUp, Users } from "lucide-react";
 import { useState } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import { AccountSettings } from "../components/AccountSettings";
@@ -16,6 +16,7 @@ const nav = [
   { id: "subscriptions", label: "Subscriptions", icon: "subscription", path: "/super-admin/subscriptions" },
   { id: "pricing", label: "Pricing", icon: "settings", path: "/super-admin/pricing" },
   { id: "activity", label: "Activity", icon: "locked", path: "/super-admin/activity" },
+  { id: "notifications", label: "Notifications", icon: "notifications", path: "/super-admin/notifications" },
   { id: "settings", label: "Settings", icon: "settings", path: "/super-admin/settings" }
 ];
 
@@ -28,13 +29,14 @@ export function SuperAdminApp({ data, user }) {
   }
 
   return (
-    <AppLayout appTitle="Super Admin" user={appUser} nav={nav}>
+    <AppLayout appTitle="Super Admin" user={appUser} nav={nav} notifications={data.notifications}>
       {page === "dashboard" && <Dashboard data={data} />}
       {page === "tenants" && <TenantsPage tenants={data.tenants} />}
       {page === "revenue" && <RevenuePage />}
       {page === "subscriptions" && <SubscriptionsPage tenants={data.tenants} />}
       {page === "pricing" && <Pricing />}
       {page === "activity" && <ActivityPage />}
+      {page === "notifications" && <NotificationsPage notifications={data.notifications} />}
       {page === "settings" && <AccountSettings user={user} workspaceLabel="Super Admin workspace" />}
     </AppLayout>
   );
@@ -230,6 +232,32 @@ function ActivityPage() {
         <ActivityItem tone="success" title="TechCorp renewed subscription" body="Growth plan renewal completed" time="منذ 12 دقيقة" />
         <ActivityItem tone="primary" title="Elite Academy changed plan" body="Pro plan edited by platform admin" time="منذ ساعة" />
         <ActivityItem tone="warning" title="Language Institute needs renewal" body="Subscription expires soon" time="اليوم" />
+      </div>
+    </>
+  );
+}
+
+function NotificationsPage({ notifications }) {
+  return (
+    <>
+      <div className="stitch-page-head">
+        <div>
+          <h1>مركز الإشعارات</h1>
+          <p>تنبيهات تشغيلية على مستوى المنصة: التجديدات، المدفوعات، والأمان.</p>
+        </div>
+      </div>
+      <div className="stitch-notification-list">
+        {notifications.map((item) => (
+          <a className="stitch-notification-item" href={item.target} key={item.id}>
+            <Bell size={22} />
+            <div>
+              <strong>{item.title}</strong>
+              <span>{item.body}</span>
+              <small>{item.time}</small>
+            </div>
+            <Badge tone={item.type === "Security" ? "danger" : "primary"}>{item.type}</Badge>
+          </a>
+        ))}
       </div>
     </>
   );

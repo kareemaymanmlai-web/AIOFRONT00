@@ -1,51 +1,52 @@
-import { ArrowRight, Building2, KeyRound, LockKeyhole, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Building2, KeyRound, LockKeyhole, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "../components/Button";
+import { useLanguage } from "../contexts/LanguageContext";
 
 export function RolePicker() {
+  const { language } = useLanguage();
+
   return (
-    <main className="flow-page">
+    <main className="flow-page" dir={language === "ar" ? "rtl" : "ltr"}>
       <FlowHeader />
       <section className="workspace-choice">
-        <span className="flow-badge">No public role selection</span>
-        <h1>Create or Join Workspace</h1>
-        <p>
-          Choose the trusted flow. Platform owner accounts are internal only and never appear in public onboarding.
-        </p>
+        <span className="flow-badge">بدون اختيار دور علني</span>
+        <h1>إنشاء أو الانضمام لمساحة عمل</h1>
+        <p>اختر المسار المناسب لك. حسابات مالكي المنصة داخلية فقط ولا تظهر أبداً في التسجيل العام.</p>
 
         <div className="choice-grid">
           <article className="choice-card">
             <div className="choice-icon"><Building2 size={32} /></div>
-            <h2>Create Company Workspace</h2>
-            <p>For business owners, academies, training centers, and teams starting a secure AIN workspace.</p>
+            <h2>إنشاء مساحة عمل لشركة</h2>
+            <p>لأصحاب الأعمال والأكاديميات ومراكز التدريب والفرق التي تريد بدء مساحة عمل آمنة على AIN.</p>
             <div className="choice-pills">
-              <span>Owner becomes Company Admin</span>
-              <span>14-day trial</span>
+              <span>المالك يصبح مدير الشركة</span>
+              <span>تجربة مجانية 14 يوم</span>
             </div>
             <Button as={Link} to="/register-company">
-              Start Company Setup
-              <ArrowRight size={16} />
+              ابدأ إعداد الشركة
+              <ArrowLeft size={16} />
             </Button>
           </article>
 
           <article className="choice-card">
             <div className="choice-icon cyan"><KeyRound size={32} /></div>
-            <h2>Join Existing Workspace</h2>
-            <p>For employees, students, and members who have an invitation link or workspace code.</p>
+            <h2>الانضمام لمساحة عمل قائمة</h2>
+            <p>للموظفين والطلاب والأعضاء الذين لديهم رابط دعوة أو كود مساحة عمل.</p>
             <div className="choice-pills">
-              <span>Invitation required</span>
-              <span>No manual role choice</span>
+              <span>يتطلب دعوة</span>
+              <span>لا يوجد اختيار دور يدوي</span>
             </div>
             <Button as={Link} to="/join" variant="ghost">
-              Enter Invitation Code
-              <ArrowRight size={16} />
+              أدخل كود الدعوة
+              <ArrowLeft size={16} />
             </Button>
           </article>
         </div>
 
         <div className="flow-note">
           <LockKeyhole size={18} />
-          <span>Internal platform admins sign in with seeded credentials. Public registration cannot create platform-level access.</span>
+          <span>مديرو المنصة الداخليون يسجلون الدخول ببيانات معتمدة مسبقاً. التسجيل العام لا يمكنه إنشاء صلاحيات على مستوى المنصة.</span>
         </div>
       </section>
     </main>
@@ -59,14 +60,14 @@ function FlowHeader() {
         <span>A</span>
         <strong>AIN</strong>
       </Link>
-      <nav aria-label="Workspace links">
-        <Link to="/">Landing</Link>
-        <Link to="/login">Login</Link>
-        <Link to="/workspace">Workspace</Link>
+      <nav aria-label="روابط مساحة العمل">
+        <Link to="/">الصفحة الرئيسية</Link>
+        <Link to="/login">تسجيل الدخول</Link>
+        <Link to="/workspace">مساحة العمل</Link>
       </nav>
       <div className="flow-header-actions">
-        <Button as={Link} to="/login" variant="ghost">Login</Button>
-        <Button as={Link} to="/register-company"><ShieldCheck size={16} /> Get Started</Button>
+        <Button as={Link} to="/login" variant="ghost">تسجيل الدخول</Button>
+        <Button as={Link} to="/register-company"><ShieldCheck size={16} /> ابدأ الآن</Button>
       </div>
     </header>
   );

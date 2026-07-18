@@ -22,7 +22,7 @@ export function EndUserApp({ data, user }) {
   }
 
   return (
-    <AppLayout appTitle="End User" user={appUser} nav={nav}>
+    <AppLayout appTitle="End User" user={appUser} nav={nav} notifications={data.notifications}>
       {page === "home" && <UserDashboard data={data} user={user} />}
       {page === "files" && <ProtectedFiles data={data} user={user} />}
       {page === "calendar" && <MeetingsPage />}

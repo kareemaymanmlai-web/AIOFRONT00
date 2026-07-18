@@ -40,12 +40,15 @@ const icons = {
   invites: UserPlus
 };
 
-export function AppLayout({ appTitle, user, nav, children }) {
+export function AppLayout({ appTitle, user, nav, children, notifications = [] }) {
   const { logout } = useAuth();
   const { t, toggleLanguage } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const [accountOpen, setAccountOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const workspaceName = user.company || "AIN SaaS";
+  const unreadCount = notifications.filter((item) => item.unread).length;
+  const notificationsPath = nav.find((item) => item.id === "notifications")?.path || "#";
 
   const handleLogout = () => {
     logout();
@@ -94,9 +97,54 @@ export function AppLayout({ appTitle, user, nav, children }) {
           <div className="stitch-top-actions">
             <button className="stitch-lang-toggle" onClick={toggleLanguage} type="button" aria-label="Change language">{t.language}<Globe2 size={18} /></button>
             <button className="stitch-icon-button" onClick={toggleTheme} type="button" aria-label="Toggle theme"><Moon size={22} /></button>
-            <button className="stitch-icon-button has-dot" type="button" aria-label="Notifications"><Bell size={22} /></button>
+            <div className="stitch-notif-wrap">
+              <button
+                className={unreadCount > 0 ? "stitch-icon-button has-dot" : "stitch-icon-button"}
+                onClick={() => {
+                  setNotifOpen((value) => !value);
+                  setAccountOpen(false);
+                }}
+                type="button"
+                aria-label="Notifications"
+              >
+                <Bell size={22} />
+              </button>
+              {notifOpen && (
+                <div className="stitch-notif-menu">
+                  <div className="stitch-notif-menu-head">
+                    <strong>الإشعارات</strong>
+                    {unreadCount > 0 && <span className="stitch-notif-count">{unreadCount} جديد</span>}
+                  </div>
+                  {notifications.length === 0 ? (
+                    <div className="stitch-notif-empty">لا توجد إشعارات جديدة</div>
+                  ) : (
+                    <div className="stitch-notif-menu-list">
+                      {notifications.slice(0, 5).map((item) => (
+                        <a
+                          className={item.unread ? "stitch-notif-menu-item unread" : "stitch-notif-menu-item"}
+                          href={item.target}
+                          key={item.id}
+                        >
+                          <strong>{item.title}</strong>
+                          <span>{item.body}</span>
+                          <small>{item.time}</small>
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                  <a className="stitch-notif-menu-footer" href={notificationsPath}>عرض كل الإشعارات</a>
+                </div>
+              )}
+            </div>
             <span className="stitch-divider" />
-            <button className="stitch-profile" onClick={() => setAccountOpen((value) => !value)} type="button">
+            <button
+              className="stitch-profile"
+              onClick={() => {
+                setAccountOpen((value) => !value);
+                setNotifOpen(false);
+              }}
+              type="button"
+            >
               <i>{user.name.slice(0, 2).toUpperCase()}</i>
               <span>
                 <strong>{user.name}</strong>

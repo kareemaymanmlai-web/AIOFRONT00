@@ -1,45 +1,79 @@
-import { ArrowLeft, ArrowRight, Building2, CheckCircle2, CloudUpload, KeyRound, LockKeyhole, Search, ShieldCheck, UserPlus } from "lucide-react";
+import { ArrowLeft, Building2, CloudUpload, KeyRound, LockKeyhole, Search } from "lucide-react";
+import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button } from "../components/Button";
 import { FormField } from "../components/FormField";
+import { PasswordField } from "../components/PasswordField";
 import { useAuth } from "../contexts/AuthContext";
+import { useLanguage } from "../contexts/LanguageContext";
+import { useToast } from "../contexts/ToastContext";
 
 export function RegisterCompanyPage() {
+  const { language } = useLanguage();
+  const { showToast } = useToast();
   const navigate = useNavigate();
+  const [form, setForm] = useState({
+    company: "TechCorp Egypt",
+    name: "Ahmed Mohamed",
+    email: "owner@techcorp.com",
+    password: "12345678",
+    confirm: "12345678"
+  });
+  const [loading, setLoading] = useState(false);
 
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault();
+    if (form.password !== form.confirm) {
+      showToast("كلمتا المرور غير متطابقتين", "danger");
+      return;
+    }
+    setLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    setLoading(false);
     navigate("/company-onboarding");
   };
 
   return (
-    <main className="flow-page">
+    <main className="flow-page" dir={language === "ar" ? "rtl" : "ltr"}>
       <FlowHeader />
       <section className="auth-split">
-        <form className="flow-card form-grid" onSubmit={submit}>
+        <form className="flow-card form-grid" onSubmit={submit} noValidate>
           <BrandLockup />
           <div>
-            <span className="flow-badge">Create Company Workspace</span>
-            <h1>Create your company</h1>
-            <p>Start a 14-day trial. The creator becomes Company Owner/Admin after backend confirmation.</p>
+            <span className="flow-badge">إنشاء مساحة عمل لشركة</span>
+            <h1>أنشئ حساب شركتك</h1>
+            <p>ابدأ تجربة مجانية لمدة 14 يوم. يصبح المنشئ مالك/مدير الشركة بعد تأكيد الباك اند.</p>
           </div>
-          <FormField label="Company name"><input defaultValue="TechCorp Egypt" required /></FormField>
-          <FormField label="Your name"><input defaultValue="Ahmed Mohamed" required /></FormField>
-          <FormField label="Email address"><input defaultValue="owner@techcorp.com" type="email" required /></FormField>
-          <FormField label="Password"><input defaultValue="12345678" minLength={8} type="password" required /></FormField>
-          <FormField label="Confirm password"><input defaultValue="12345678" minLength={8} type="password" required /></FormField>
-          <label className="check-line"><input defaultChecked type="checkbox" /> I agree to Terms and Privacy Policy</label>
-          <Button className="full-width" type="submit">Create Company</Button>
+          <FormField label="اسم الشركة">
+            <input value={form.company} onChange={(event) => setForm({ ...form, company: event.target.value })} required />
+          </FormField>
+          <FormField label="اسمك الكامل">
+            <input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required />
+          </FormField>
+          <FormField label="البريد الإلكتروني">
+            <input type="email" autoComplete="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required />
+          </FormField>
+          <FormField label="كلمة المرور">
+            <PasswordField value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} minLength={8} autoComplete="new-password" />
+          </FormField>
+          <FormField label="تأكيد كلمة المرور" error={form.confirm && form.confirm !== form.password ? "كلمتا المرور غير متطابقتين" : ""}>
+            <PasswordField value={form.confirm} onChange={(event) => setForm({ ...form, confirm: event.target.value })} minLength={8} autoComplete="new-password" />
+          </FormField>
+          <label className="check-line"><input defaultChecked type="checkbox" /> أوافق على الشروط وسياسة الخصوصية</label>
+          <Button className="full-width" type="submit" disabled={loading} aria-busy={loading}>
+            {loading ? <span className="btn-spinner" aria-hidden="true" /> : null}
+            {loading ? "جاري الإنشاء..." : "إنشاء الشركة"}
+          </Button>
         </form>
 
         <aside className="flow-side-card">
           <div className="choice-icon"><Building2 size={36} /></div>
-          <h2>Secure. Simple. Powerful.</h2>
-          <p>Everything a company needs to manage protected rooms, content access, members, and analytics.</p>
+          <h2>آمن. بسيط. قوي.</h2>
+          <p>كل ما تحتاجه الشركة لإدارة الرومات المحمية، والوصول للمحتوى، والأعضاء، والتحليلات.</p>
           <div className="choice-pills vertical">
-            <span>Secure content protection</span>
-            <span>One device access</span>
-            <span>Advanced analytics</span>
+            <span>حماية محتوى آمنة</span>
+            <span>دخول من جهاز واحد</span>
+            <span>تحليلات متقدمة</span>
           </div>
         </aside>
       </section>
@@ -48,19 +82,30 @@ export function RegisterCompanyPage() {
 }
 
 export function CompanyOnboardingPage() {
+  const { language } = useLanguage();
+  const { showToast } = useToast();
   const navigate = useNavigate();
-  const steps = ["Branding", "Info", "Plan", "Success"];
+  const [loading, setLoading] = useState(false);
+  const steps = ["العلامة التجارية", "المعلومات", "الخطة", "الانتهاء"];
+
+  const finish = async () => {
+    setLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    setLoading(false);
+    showToast("تم إعداد مساحة العمل بنجاح");
+    navigate("/login?role=tenant-admin");
+  };
 
   return (
-    <main className="flow-page">
+    <main className="flow-page" dir={language === "ar" ? "rtl" : "ltr"}>
       <FlowHeader />
       <section className="onboarding-shell">
         <div className="flow-card">
           <div className="onboarding-head">
             <div>
-              <span className="flow-badge">Company Onboarding</span>
-              <h1>Let's set up your brand</h1>
-              <p>Upload the logo, choose a brand color, and confirm the plan before opening the dashboard.</p>
+              <span className="flow-badge">إعداد الشركة</span>
+              <h1>لنجهّز علامتك التجارية</h1>
+              <p>ارفع الشعار، اختر لون العلامة التجارية، وأكّد الخطة قبل فتح لوحة التحكم.</p>
             </div>
             <div className="step-pills">
               {steps.map((step, index) => <span className={index === 0 ? "active" : ""} key={step}>{index + 1} {step}</span>)}
@@ -71,26 +116,31 @@ export function CompanyOnboardingPage() {
             <div className="form-grid">
               <label className="upload-zone">
                 <CloudUpload size={34} />
-                <strong>Upload logo</strong>
-                <span>PNG, JPG, or SVG recommended 400x400</span>
+                <strong>رفع الشعار</strong>
+                <span>يُفضّل PNG أو JPG أو SVG بمقاس 400×400</span>
                 <input accept="image/png,image/jpeg,image/svg+xml" type="file" />
               </label>
-              <FormField label="Company name"><input defaultValue="TechCorp Egypt" /></FormField>
-              <FormField label="Company bio"><textarea defaultValue="We provide innovative software and training solutions." /></FormField>
+              <FormField label="اسم الشركة"><input defaultValue="TechCorp Egypt" /></FormField>
+              <FormField label="نبذة عن الشركة"><textarea defaultValue="نقدم حلولاً برمجية وتدريبية مبتكرة." /></FormField>
               <div className="brand-swatches">
-                {["#4F46E5", "#06B6D4", "#10B981", "#F59E0B", "#8B5CF6"].map((color) => <button style={{ background: color }} type="button" key={color} aria-label={color} />)}
+                {["#4F46E5", "#06B6D4", "#10B981", "#F59E0B", "#8B5CF6"].map((color) => (
+                  <button style={{ background: color }} type="button" key={color} aria-label={color} />
+                ))}
               </div>
-              <Button onClick={() => navigate("/login?role=tenant-admin")}>Finish setup</Button>
+              <Button onClick={finish} disabled={loading} aria-busy={loading}>
+                {loading ? <span className="btn-spinner" aria-hidden="true" /> : null}
+                {loading ? "جاري الإنهاء..." : "إنهاء الإعداد"}
+              </Button>
             </div>
 
             <div className="brand-preview-card">
               <div className="brand-preview-logo">TE</div>
               <h2>TechCorp Egypt</h2>
-              <p>Your employees will see this identity inside AIN.</p>
+              <p>سيرى موظفوك هذه الهوية داخل AIN.</p>
               <div className="mini-stats">
-                <span><strong>12</strong> Rooms</span>
-                <span><strong>245</strong> Members</span>
-                <span><strong>320</strong> Files</span>
+                <span><strong>12</strong> روم</span>
+                <span><strong>245</strong> عضو</span>
+                <span><strong>320</strong> ملف</span>
               </div>
             </div>
           </div>
@@ -101,26 +151,40 @@ export function CompanyOnboardingPage() {
 }
 
 export function JoinWorkspacePage() {
+  const { language } = useLanguage();
+  const { showToast } = useToast();
   const navigate = useNavigate();
+  const [code, setCode] = useState("TECHCORP-2026");
+  const [loading, setLoading] = useState(false);
 
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault();
+    if (!code.trim()) {
+      showToast("أدخل كود الدعوة", "danger");
+      return;
+    }
+    setLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    setLoading(false);
     navigate("/login?role=end-user");
   };
 
   return (
-    <main className="flow-page">
+    <main className="flow-page" dir={language === "ar" ? "rtl" : "ltr"}>
       <FlowHeader />
       <section className="center-flow">
-        <form className="flow-card join-card" onSubmit={submit}>
+        <form className="flow-card join-card" onSubmit={submit} noValidate>
           <div className="choice-icon cyan"><KeyRound size={34} /></div>
-          <h1>Join Existing Workspace</h1>
-          <p>Enter the invitation code from your company admin. We will attach your account after login.</p>
-          <FormField label="Invitation code">
-            <input defaultValue="TECHCORP-2026" required />
+          <h1>الانضمام لمساحة عمل قائمة</h1>
+          <p>أدخل كود الدعوة من مدير شركتك. سنقوم بربط حسابك بعد تسجيل الدخول.</p>
+          <FormField label="كود الدعوة">
+            <input value={code} onChange={(event) => setCode(event.target.value)} required />
           </FormField>
-          <Button className="full-width" type="submit">Validate code and continue</Button>
-          <Button as={Link} to="/no-workspace" variant="ghost">I do not have a code</Button>
+          <Button className="full-width" type="submit" disabled={loading} aria-busy={loading}>
+            {loading ? <span className="btn-spinner" aria-hidden="true" /> : null}
+            {loading ? "جاري التحقق..." : "تحقق من الكود والمتابعة"}
+          </Button>
+          <Button as={Link} to="/no-workspace" variant="ghost">ليس لدي كود</Button>
         </form>
       </section>
     </main>
@@ -129,37 +193,38 @@ export function JoinWorkspacePage() {
 
 export function NoWorkspacePage() {
   const { user } = useAuth();
+  const { language } = useLanguage();
 
   return (
-    <main className="flow-page">
+    <main className="flow-page" dir={language === "ar" ? "rtl" : "ltr"}>
       <FlowHeader />
       <section className="center-flow">
         <div className="flow-card join-card">
           <div className="choice-icon cyan"><Search size={34} /></div>
-          <h1>{user ? "Your account is ready, but no workspace yet" : "You are not connected to any workspace yet"}</h1>
+          <h1>{user ? "حسابك جاهز، لكن لا توجد مساحة عمل بعد" : "لست مرتبطاً بأي مساحة عمل بعد"}</h1>
           <p>
             {user
-              ? `Ask your company admin to invite ${user.email}. When the invitation arrives, it will appear here or open from the invitation link.`
-              : "Create an account first, then ask your company admin to invite the same email or enter an invitation code."}
+              ? `اطلب من مدير شركتك دعوة ${user.email}. عندما تصل الدعوة، ستظهر هنا أو تفتح من رابط الدعوة مباشرة.`
+              : "أنشئ حساباً أولاً، ثم اطلب من مدير شركتك دعوة نفس البريد أو أدخل كود دعوة."}
           </p>
           <div className="inline-form">
-            <input placeholder="Enter invitation code e.g. TECHCORP-2026" />
-            <Button as={Link} to="/join">Join</Button>
+            <input placeholder="أدخل كود الدعوة مثال: TECHCORP-2026" />
+            <Button as={Link} to="/join">انضمام</Button>
           </div>
           {user && (
             <div className="pending-invite-box">
-              <strong>No pending invitations found</strong>
-              <span>Backend will check invitations by email and show pending workspace access here.</span>
+              <strong>لا توجد دعوات معلّقة حالياً</strong>
+              <span>سيتحقق الباك اند من الدعوات عبر البريد الإلكتروني ويعرض مساحات العمل المتاحة هنا.</span>
             </div>
           )}
           <div className="flow-actions">
-            <Button as={Link} to="/invite/demo-token" variant="ghost">Preview invitation</Button>
+            <Button as={Link} to="/invite/demo-token" variant="ghost">معاينة الدعوة</Button>
             {user ? (
-              <Button as={Link} to="/login" variant="ghost">Switch account</Button>
+              <Button as={Link} to="/login" variant="ghost">تبديل الحساب</Button>
             ) : (
-              <Button as={Link} to="/create-account">Create personal account</Button>
+              <Button as={Link} to="/create-account">إنشاء حساب شخصي</Button>
             )}
-            <Button as={Link} to="/register-company" variant="ghost">Create Company Workspace</Button>
+            <Button as={Link} to="/register-company" variant="ghost">إنشاء مساحة عمل لشركة</Button>
           </div>
         </div>
       </section>
@@ -169,9 +234,10 @@ export function NoWorkspacePage() {
 
 export function InviteAcceptPage() {
   const { token } = useParams();
+  const { language } = useLanguage();
 
   return (
-    <main className="stitch-auth-page stitch-invite-page" dir="rtl">
+    <main className="stitch-auth-page stitch-invite-page" dir={language === "ar" ? "rtl" : "ltr"}>
       <FlowHeader />
       <section className="center-flow">
         <div className="flow-card invite-card stitch-invite-card">
@@ -180,9 +246,9 @@ export function InviteAcceptPage() {
           <h1>فريق تحليل البيانات</h1>
           <p>دعتك سارة أحمد للانضمام إلى مساحة العمل. Token: {token}</p>
           <div className="invite-summary">
-            <div><strong>الدور</strong><span>Company Member / End User</span></div>
-            <div><strong>الرومات</strong><span>Data, Reports, Team</span></div>
-            <div><strong>الداعي</strong><span>Sarah Ahmed</span></div>
+            <div><strong>الدور</strong><span>عضو في الشركة / مستخدم نهائي</span></div>
+            <div><strong>الرومات</strong><span>البيانات، التقارير، الفريق</span></div>
+            <div><strong>الداعي</strong><span>سارة أحمد</span></div>
           </div>
           <div className="invite-about-box">
             <strong>حول هذه المساحة</strong>
@@ -196,21 +262,22 @@ export function InviteAcceptPage() {
       </section>
       <footer className="stitch-auth-footer">
         <nav><a>الخصوصية</a><a>الشروط</a><a>الدعم</a></nav>
-        <span>AIN Precision Systems 2024 ©</span>
+        <span>AIN Precision Systems 2026 ©</span>
       </footer>
     </main>
   );
 }
 
 export function NotFoundPage() {
+  const { language } = useLanguage();
   return (
-    <main className="flow-page">
+    <main className="flow-page" dir={language === "ar" ? "rtl" : "ltr"}>
       <section className="not-found">
         <div className="choice-icon"><LockKeyhole size={42} /></div>
         <strong>404</strong>
-        <h1>Page not found</h1>
-        <p>The page you are looking for does not exist or moved to another workspace route.</p>
-        <Button as={Link} to="/workspace"><ArrowLeft size={16} /> Go to workspace flow</Button>
+        <h1>الصفحة غير موجودة</h1>
+        <p>الصفحة التي تبحث عنها غير موجودة أو انتقلت إلى مسار آخر في مساحة العمل.</p>
+        <Button as={Link} to="/workspace"><ArrowLeft size={16} /> الذهاب لمسار مساحة العمل</Button>
       </section>
     </main>
   );
@@ -223,10 +290,10 @@ function FlowHeader() {
         <span>A</span>
         <strong>AIN</strong>
       </Link>
-      <nav aria-label="Workspace links">
-        <Link to="/">Landing</Link>
-        <Link to="/workspace">Workspace</Link>
-        <Link to="/login">Login</Link>
+      <nav aria-label="روابط مساحة العمل">
+        <Link to="/">الصفحة الرئيسية</Link>
+        <Link to="/workspace">مساحة العمل</Link>
+        <Link to="/login">تسجيل الدخول</Link>
       </nav>
     </header>
   );

@@ -53,7 +53,7 @@ export function TenantAdminApp({ data, user }) {
   }
 
   return (
-    <AppLayout appTitle="Tenant Admin" user={appUser} nav={nav}>
+    <AppLayout appTitle="Tenant Admin" user={appUser} nav={nav} notifications={data.notifications}>
       {page === "dashboard" && <Dashboard data={data} />}
       {page === "rooms" && <RoomsPage rooms={data.rooms} />}
       {page === "files" && <ContentLibrary files={data.files} />}
