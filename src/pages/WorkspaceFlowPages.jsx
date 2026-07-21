@@ -192,8 +192,14 @@ export function JoinWorkspacePage() {
 }
 
 export function NoWorkspacePage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { language } = useLanguage();
+  const navigate = useNavigate();
+
+  const switchAccount = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
 
   return (
     <main className="flow-page" dir={language === "ar" ? "rtl" : "ltr"}>
@@ -220,7 +226,7 @@ export function NoWorkspacePage() {
           <div className="flow-actions">
             <Button as={Link} to="/invite/demo-token" variant="ghost">معاينة الدعوة</Button>
             {user ? (
-              <Button as={Link} to="/login" variant="ghost">تبديل الحساب</Button>
+              <Button onClick={switchAccount} type="button" variant="ghost">تبديل الحساب</Button>
             ) : (
               <Button as={Link} to="/create-account">إنشاء حساب شخصي</Button>
             )}

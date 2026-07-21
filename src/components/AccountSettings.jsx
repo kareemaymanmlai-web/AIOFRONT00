@@ -1,17 +1,76 @@
-import { Camera, LockKeyhole, Mail, Palette, ShieldCheck, Smartphone, UserRound } from "lucide-react";
+import { Camera, CheckCircle2, KeyRound, LockKeyhole, Mail, Monitor, Moon, Palette, ShieldCheck, Smartphone, Sun, UserRound } from "lucide-react";
 import { useState } from "react";
+import { useLanguage } from "../contexts/LanguageContext";
+import { useTheme } from "../contexts/ThemeContext";
+import { useToast } from "../contexts/ToastContext";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { PageHeader } from "./PageHeader";
+import { PasswordField } from "./PasswordField";
 
-export function AccountSettings({ user, workspaceLabel = "Workspace" }) {
+const groups = [
+  ["مساحة العمل", [
+    { id: "general", label: "عام", icon: UserRound },
+    { id: "people", label: "الأعضاء", icon: UserRound },
+    { id: "security", label: "الأمان والصلاحيات", icon: ShieldCheck },
+    { id: "audit", label: "سجل التدقيق", icon: KeyRound }
+  ]],
+  ["الملفات الشخصية", [
+    { id: "profile", label: "الملف الشخصي", icon: UserRound },
+    { id: "appearance", label: "المظهر", icon: Palette }
+  ]]
+];
+
+export function AccountSettings({ user, workspaceLabel = "مساحة العمل" }) {
+  const { language } = useLanguage();
+  const [section, setSection] = useState("profile");
+
+  const panels = {
+    general: <ProfilePanel user={user} title="عام" subtitle="المعلومات الأساسية لمساحة العمل." />,
+    profile: <ProfilePanel user={user} title="الملف الشخصي" subtitle="بياناتك الشخصية وصورة حسابك." />,
+    people: <ComingSoonPanel title="الأعضاء" subtitle="إدارة أعضاء مساحة العمل وصلاحياتهم." />,
+    security: <SecurityPanel />,
+    audit: <ComingSoonPanel title="سجل التدقيق" subtitle="سجل كامل لكل نشاط يحدث داخل مساحة العمل." />,
+    appearance: <AppearancePanel />
+  };
+
+  return (
+    <div className="settings-workspace" dir={language === "ar" ? "rtl" : "ltr"}>
+      <aside className="settings-sidebar">
+        <strong>كل الإعدادات</strong>
+        {groups.map(([title, items]) => (
+          <div className="settings-group" key={title}>
+            <span>{title}</span>
+            {items.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  className={section === item.id ? "active" : ""}
+                  type="button"
+                  key={item.id}
+                  onClick={() => setSection(item.id)}
+                >
+                  <Icon size={16} />
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </aside>
+      <main className="settings-main">
+        <PageHeader title="الإعدادات" subtitle={`الملف الشخصي، الأمان، والتفضيلات لـ ${workspaceLabel}`} />
+        {panels[section]}
+      </main>
+    </div>
+  );
+}
+
+function ProfilePanel({ user, title, subtitle }) {
+  const { showToast } = useToast();
   const [avatarPreview, setAvatarPreview] = useState("");
-  const settingGroups = [
-    ["Workspace", ["General", "People", "Security & Permissions", "Audit Logs"]],
-    ["Features", ["Template Center", "Automations", "Spaces", "Work Schedule"]],
-    ["My Settings", ["Profile", "Notifications", "Themes", "Keyboard shortcuts"]]
-  ];
-  const colors = ["#4F46E5", "#7C3AED", "#0EA5E9", "#EC4899", "#A855F7", "#6366F1", "#F97316", "#14B8A6", "#A78BFA", "#10B981"];
+  const [form, setForm] = useState({ name: user.name, email: user.email, password: "" });
+  const [saving, setSaving] = useState(false);
 
   const onAvatarChange = (event) => {
     const file = event.target.files?.[0];
@@ -19,98 +78,174 @@ export function AccountSettings({ user, workspaceLabel = "Workspace" }) {
     setAvatarPreview(URL.createObjectURL(file));
   };
 
+  const save = async (event) => {
+    event.preventDefault();
+    setSaving(true);
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    setSaving(false);
+    showToast("تم حفظ التعديلات بنجاح");
+  };
+
+  const reset = () => {
+    setForm({ name: user.name, email: user.email, password: "" });
+    setAvatarPreview("");
+  };
+
   return (
-    <div className="settings-workspace">
-      <aside className="settings-sidebar">
-        <strong>All settings</strong>
-        {settingGroups.map(([title, items]) => (
-          <div className="settings-group" key={title}>
-            <span>{title}</span>
-            {items.map((item) => (
-              <button className={item === "Profile" || item === "General" ? "active" : ""} type="button" key={item}>
-                <UserRound size={15} />
-                {item}
-              </button>
-            ))}
+    <section className="settings-card">
+      <div className="settings-card-head">
+        <h3>{title}</h3>
+        <p>{subtitle}</p>
+      </div>
+      <form className="settings-form-card" onSubmit={save}>
+        <div className="settings-avatar-block">
+          <label className="settings-avatar-upload">
+            {avatarPreview ? (
+              <img src={avatarPreview} alt={`${user.name} profile`} />
+            ) : (
+              <span>{user.name.slice(0, 2).toUpperCase()}</span>
+            )}
+            <input accept="image/png,image/jpeg,image/webp" type="file" onChange={onAvatarChange} />
+            <i><Camera size={15} /></i>
+          </label>
+          <div>
+            <strong>{form.name}</strong>
+            <span>متصل الآن</span>
           </div>
-        ))}
-      </aside>
-      <main className="settings-main">
-        <PageHeader title="My Settings" subtitle={`Profile, security, and preferences for ${workspaceLabel}`} />
-        <section className="settings-section">
-          <div className="settings-section-copy">
-            <h3>Profile</h3>
-            <p>Your personal information and profile picture.</p>
-          </div>
-          <div className="settings-form-card">
-            <div className="settings-avatar-block">
-              <label className="settings-avatar-upload">
-                {avatarPreview ? (
-                  <img src={avatarPreview} alt={`${user.name} profile`} />
-                ) : (
-                  <span>{user.name.slice(0, 2).toUpperCase()}</span>
-                )}
-                <input accept="image/png,image/jpeg,image/webp" type="file" onChange={onAvatarChange} />
-                <i><Camera size={15} /></i>
-              </label>
-              <strong>{user.name}</strong>
-              <span>Online</span>
-            </div>
-            <label>
-              <span>Full Name</span>
-              <div className="settings-input"><UserRound size={15} /> <input defaultValue={user.name} /></div>
-            </label>
-            <label>
-              <span>Email</span>
-              <div className="settings-input"><Mail size={15} /> <input defaultValue={user.email} /></div>
-            </label>
-            <label>
-              <span>Password</span>
-              <div className="settings-input"><LockKeyhole size={15} /> <input placeholder="Enter new password" type="password" /></div>
-            </label>
-            <div className="settings-form-actions">
-              <Button>Save profile</Button>
-              <Button variant="ghost">Cancel</Button>
-            </div>
-          </div>
-        </section>
-
-        <section className="settings-section">
-          <div className="settings-section-copy">
-            <h3>Two-factor authentication (2FA)</h3>
-            <p>Keep your account secure using SMS or authenticator app passcodes.</p>
-          </div>
-          <div className="settings-options">
-            <SettingOption icon={<Smartphone size={17} />} title="Text Message (SMS)" subtitle="Receive a one-time passcode via SMS each time you log in." badge="Business" />
-            <SettingOption icon={<ShieldCheck size={17} />} title="Authenticator App (TOTP)" subtitle="Use an app to receive a temporary one-time passcode." />
-          </div>
-        </section>
-
-        <section className="settings-section">
-          <div className="settings-section-copy">
-            <h3>Theme color</h3>
-            <p>Choose a preferred color for the app.</p>
-          </div>
-          <div className="theme-settings">
-            <div className="color-swatches">
-              {colors.map((color, index) => <button className={index === 0 ? "selected" : ""} style={{ background: color }} type="button" key={color} aria-label={`Theme color ${color}`} />)}
-            </div>
-            <div className="appearance-cards">
-              <button className="appearance-card light-card" type="button"><Palette size={18} /> Light</button>
-              <button className="appearance-card dark-card selected" type="button"><Palette size={18} /> Dark</button>
-              <button className="appearance-card system-card" type="button"><Palette size={18} /> System</button>
-            </div>
-          </div>
-        </section>
-      </main>
-    </div>
+        </div>
+        <label>
+          <span>الاسم الكامل</span>
+          <div className="settings-input"><UserRound size={15} /> <input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></div>
+        </label>
+        <label>
+          <span>البريد الإلكتروني</span>
+          <div className="settings-input"><Mail size={15} /> <input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></div>
+        </label>
+        <label>
+          <span>كلمة المرور الجديدة</span>
+          <PasswordField
+            value={form.password}
+            onChange={(event) => setForm({ ...form, password: event.target.value })}
+            placeholder="اتركها فارغة إن لم ترغب بالتغيير"
+            minLength={0}
+            required={false}
+            autoComplete="new-password"
+          />
+        </label>
+        <div className="settings-form-actions">
+          <Button type="submit" disabled={saving} aria-busy={saving}>
+            {saving ? <span className="btn-spinner" aria-hidden="true" /> : null}
+            {saving ? "جاري الحفظ..." : "حفظ التعديلات"}
+          </Button>
+          <Button onClick={reset} type="button" variant="ghost">إلغاء</Button>
+        </div>
+      </form>
+    </section>
   );
 }
 
-function SettingOption({ icon, title, subtitle, badge }) {
+function SecurityPanel() {
+  const { showToast } = useToast();
+  const [sms, setSms] = useState(false);
+  const [totp, setTotp] = useState(true);
+
+  const toggle = (current, setter, label) => {
+    setter(!current);
+    showToast(!current ? `تم تفعيل ${label}` : `تم إيقاف ${label}`);
+  };
+
+  return (
+    <section className="settings-card">
+      <div className="settings-card-head">
+        <h3>التحقق بخطوتين (2FA)</h3>
+        <p>حافظ على أمان حسابك برمز إضافي عبر SMS أو تطبيق مصادقة.</p>
+      </div>
+      <div className="settings-options">
+        <SettingOption
+          icon={<Smartphone size={17} />}
+          title="رسالة نصية (SMS)"
+          subtitle="استقبل رمزاً لمرة واحدة عبر الرسائل النصية عند كل تسجيل دخول."
+          badge="خطة الأعمال"
+          checked={sms}
+          onToggle={() => toggle(sms, setSms, "التحقق عبر SMS")}
+        />
+        <SettingOption
+          icon={<ShieldCheck size={17} />}
+          title="تطبيق المصادقة (TOTP)"
+          subtitle="استخدم تطبيقاً مثل Google Authenticator لاستقبال رمز مؤقت."
+          checked={totp}
+          onToggle={() => toggle(totp, setTotp, "تطبيق المصادقة")}
+        />
+      </div>
+    </section>
+  );
+}
+
+function AppearancePanel() {
+  const { theme, setTheme } = useTheme();
+  const colors = ["#4F46E5", "#7C3AED", "#0EA5E9", "#EC4899", "#A855F7", "#6366F1", "#F97316", "#14B8A6"];
+  const [accent, setAccent] = useState(colors[0]);
+
+  return (
+    <section className="settings-card">
+      <div className="settings-card-head">
+        <h3>المظهر</h3>
+        <p>اختر شكل الواجهة ولون العلامة المميز لحسابك.</p>
+      </div>
+      <div className="theme-settings">
+        <div className="appearance-cards">
+          <button className={theme === "light" ? "appearance-card light-card selected" : "appearance-card light-card"} onClick={() => setTheme("light")} type="button">
+            <Sun size={18} /> فاتح
+          </button>
+          <button className={theme === "dark" ? "appearance-card dark-card selected" : "appearance-card dark-card"} onClick={() => setTheme("dark")} type="button">
+            <Moon size={18} /> داكن
+          </button>
+          <button className="appearance-card system-card" disabled title="قريباً" type="button">
+            <Monitor size={18} /> حسب النظام
+          </button>
+        </div>
+        <div>
+          <span className="settings-subtle-label">لون العلامة المميز</span>
+          <div className="color-swatches">
+            {colors.map((color) => (
+              <button
+                className={accent === color ? "selected" : ""}
+                style={{ background: color }}
+                type="button"
+                key={color}
+                aria-label={`لون ${color}`}
+                onClick={() => setAccent(color)}
+              >
+                {accent === color && <CheckCircle2 color="#fff" size={16} />}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ComingSoonPanel({ title, subtitle }) {
+  return (
+    <section className="settings-card">
+      <div className="settings-card-head">
+        <h3>{title}</h3>
+        <p>{subtitle}</p>
+      </div>
+      <div className="stitch-empty-panel">
+        <LockKeyhole size={38} />
+        <strong>{title}</strong>
+        <span>هذا القسم قيد الإعداد وسيتم ربطه بالباك اند قريباً.</span>
+      </div>
+    </section>
+  );
+}
+
+function SettingOption({ icon, title, subtitle, badge, checked, onToggle }) {
   return (
     <div className="setting-option">
-      <button className="toggle-switch" type="button" aria-label={title}><span /></button>
+      <button className={checked ? "toggle-switch on" : "toggle-switch"} onClick={onToggle} type="button" aria-label={title} aria-pressed={checked}><span /></button>
       <div className="setting-option-icon">{icon}</div>
       <div>
         <strong>{title}</strong>

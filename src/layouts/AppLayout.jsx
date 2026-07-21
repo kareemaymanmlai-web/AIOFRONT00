@@ -5,9 +5,7 @@ import {
   Building2,
   Calendar,
   CreditCard,
-  Files,
   Gauge,
-  Globe2,
   HelpCircle,
   Home,
   LogOut,
@@ -19,9 +17,9 @@ import {
   Users
 } from "lucide-react";
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { useLanguage } from "../contexts/LanguageContext";
+import { useNotifications } from "../contexts/NotificationsContext";
 import { useTheme } from "../contexts/ThemeContext";
 
 const icons = {
@@ -40,19 +38,35 @@ const icons = {
   invites: UserPlus
 };
 
-export function AppLayout({ appTitle, user, nav, children, notifications = [] }) {
+export function AppLayout({ appTitle, user, nav, children }) {
   const { logout } = useAuth();
-  const { t, toggleLanguage } = useLanguage();
   const { theme, toggleTheme } = useTheme();
+  const { notifications, unreadCount, markRead } = useNotifications();
+  const navigate = useNavigate();
   const [accountOpen, setAccountOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const workspaceName = user.company || "AIN SaaS";
-  const unreadCount = notifications.filter((item) => item.unread).length;
-  const notificationsPath = nav.find((item) => item.id === "notifications")?.path || "#";
+  const notificationsPath = nav.find((item) => item.id === "notifications")?.path;
 
   const handleLogout = () => {
     logout();
     window.location.replace("/choose");
+  };
+
+  const openNotifications = () => {
+    setAccountOpen(false);
+    setNotifOpen((value) => !value);
+  };
+
+  const openAccount = () => {
+    setNotifOpen(false);
+    setAccountOpen((value) => !value);
+  };
+
+  const handleNotificationClick = (item) => {
+    markRead(item.id);
+    setNotifOpen(false);
+    navigate(item.target);
   };
 
   return (
@@ -95,56 +109,18 @@ export function AppLayout({ appTitle, user, nav, children, notifications = [] })
           </div>
 
           <div className="stitch-top-actions">
-            <button className="stitch-lang-toggle" onClick={toggleLanguage} type="button" aria-label="Change language">{t.language}<Globe2 size={18} /></button>
             <button className="stitch-icon-button" onClick={toggleTheme} type="button" aria-label="Toggle theme"><Moon size={22} /></button>
-            <div className="stitch-notif-wrap">
-              <button
-                className={unreadCount > 0 ? "stitch-icon-button has-dot" : "stitch-icon-button"}
-                onClick={() => {
-                  setNotifOpen((value) => !value);
-                  setAccountOpen(false);
-                }}
-                type="button"
-                aria-label="Notifications"
-              >
-                <Bell size={22} />
-              </button>
-              {notifOpen && (
-                <div className="stitch-notif-menu">
-                  <div className="stitch-notif-menu-head">
-                    <strong>الإشعارات</strong>
-                    {unreadCount > 0 && <span className="stitch-notif-count">{unreadCount} جديد</span>}
-                  </div>
-                  {notifications.length === 0 ? (
-                    <div className="stitch-notif-empty">لا توجد إشعارات جديدة</div>
-                  ) : (
-                    <div className="stitch-notif-menu-list">
-                      {notifications.slice(0, 5).map((item) => (
-                        <a
-                          className={item.unread ? "stitch-notif-menu-item unread" : "stitch-notif-menu-item"}
-                          href={item.target}
-                          key={item.id}
-                        >
-                          <strong>{item.title}</strong>
-                          <span>{item.body}</span>
-                          <small>{item.time}</small>
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                  <a className="stitch-notif-menu-footer" href={notificationsPath}>عرض كل الإشعارات</a>
-                </div>
-              )}
-            </div>
-            <span className="stitch-divider" />
             <button
-              className="stitch-profile"
-              onClick={() => {
-                setAccountOpen((value) => !value);
-                setNotifOpen(false);
-              }}
+              className={unreadCount > 0 ? "stitch-icon-button has-dot" : "stitch-icon-button"}
+              onClick={openNotifications}
               type="button"
+              aria-label="Notifications"
+              aria-expanded={notifOpen}
             >
+              <Bell size={22} />
+            </button>
+            <span className="stitch-divider" />
+            <button className="stitch-profile" onClick={openAccount} type="button" aria-expanded={accountOpen}>
               <i>{user.name.slice(0, 2).toUpperCase()}</i>
               <span>
                 <strong>{user.name}</strong>
@@ -152,6 +128,41 @@ export function AppLayout({ appTitle, user, nav, children, notifications = [] })
               </span>
             </button>
           </div>
+
+          {notifOpen && (
+            <div className="stitch-notification-menu">
+              <div className="stitch-notification-menu-head">
+                <strong>الإشعارات</strong>
+                {unreadCount > 0 && <span className="stitch-unread-pill">{unreadCount} غير مقروء</span>}
+              </div>
+              {notifications.length === 0 ? (
+                <div className="stitch-notification-menu-empty">لا توجد إشعارات حالياً</div>
+              ) : (
+                <div className="stitch-notification-menu-list">
+                  {notifications.slice(0, 5).map((item) => (
+                    <button
+                      className={item.unread ? "stitch-notification-menu-item is-unread" : "stitch-notification-menu-item"}
+                      key={item.id}
+                      type="button"
+                      onClick={() => handleNotificationClick(item)}
+                    >
+                      <span className="stitch-notification-menu-dot" aria-hidden="true" />
+                      <span>
+                        <strong>{item.title}</strong>
+                        <small>{item.body}</small>
+                        <small className="stitch-notification-menu-time">{item.time}</small>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {notificationsPath && (
+                <NavLink className="stitch-notification-menu-viewall" to={notificationsPath} onClick={() => setNotifOpen(false)}>
+                  عرض كل الإشعارات
+                </NavLink>
+              )}
+            </div>
+          )}
 
           {accountOpen && (
             <div className="stitch-account-menu">

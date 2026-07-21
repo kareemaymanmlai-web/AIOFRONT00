@@ -1,4 +1,4 @@
-import { ArrowRight, Globe2, KeyRound, Mail, ShieldCheck, UserPlus } from "lucide-react";
+import { ArrowRight, KeyRound, Mail, ShieldCheck, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "../components/Button";
@@ -259,10 +259,8 @@ function AuthHeader({ icon, title, subtitle }) {
 }
 
 function AuthTopbar() {
-  const { t, toggleLanguage } = useLanguage();
   return (
     <header className="stitch-auth-topbar">
-      <button type="button" className="stitch-lang" onClick={toggleLanguage}>{t.language} <Globe2 size={17} /></button>
       <strong>AIN</strong>
     </header>
   );

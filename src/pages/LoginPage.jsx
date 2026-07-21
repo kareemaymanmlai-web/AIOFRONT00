@@ -1,4 +1,4 @@
-import { Globe2, LogIn, Mail, ShieldCheck, Users2 } from "lucide-react";
+import { LogIn, Mail, ShieldCheck, Users2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "../components/Button";
@@ -17,7 +17,7 @@ const demoAccounts = [
 
 export function LoginPage() {
   const { user, login } = useAuth();
-  const { t, language, toggleLanguage } = useLanguage();
+  const { t, language } = useLanguage();
   const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -62,7 +62,6 @@ export function LoginPage() {
   return (
     <main className="stitch-auth-page" dir={language === "ar" ? "rtl" : "ltr"}>
       <header className="stitch-auth-topbar">
-        <button type="button" className="stitch-lang" onClick={toggleLanguage}>{t.language} <Globe2 size={17} /></button>
         <strong>AIN</strong>
       </header>
       <Card className="login-card stitch-auth-card">

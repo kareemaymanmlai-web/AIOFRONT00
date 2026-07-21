@@ -1,8 +1,9 @@
-import { Bell, CalendarDays, FileText, Lock, MessageSquare, Play, Shield, Video } from "lucide-react";
-import { Navigate, useParams } from "react-router-dom";
+import { Bell, CalendarDays, CheckCheck, FileText, Lock, MessageSquare, Play, Shield, Video } from "lucide-react";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { AccountSettings } from "../components/AccountSettings";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
+import { useNotifications } from "../contexts/NotificationsContext";
 import { AppLayout } from "../layouts/AppLayout";
 
 const nav = [
@@ -22,17 +23,18 @@ export function EndUserApp({ data, user }) {
   }
 
   return (
-    <AppLayout appTitle="End User" user={appUser} nav={nav} notifications={data.notifications}>
+    <AppLayout appTitle="End User" user={appUser} nav={nav}>
       {page === "home" && <UserDashboard data={data} user={user} />}
       {page === "files" && <ProtectedFiles data={data} user={user} />}
       {page === "calendar" && <MeetingsPage />}
-      {page === "notifications" && <NotificationsPage notifications={data.notifications} />}
+      {page === "notifications" && <NotificationsPage />}
       {page === "settings" && <AccountSettings user={user} workspaceLabel="End User workspace" />}
     </AppLayout>
   );
 }
 
 function UserDashboard({ data, user }) {
+  const { notifications } = useNotifications();
   return (
     <>
       <div className="stitch-page-head">
@@ -40,7 +42,7 @@ function UserDashboard({ data, user }) {
           <h1>مرحباً، {user.name}</h1>
           <p>مساحتك الآمنة للوصول إلى الغرف والملفات المخصصة لك فقط.</p>
         </div>
-        <Button as="a" href="/end-user/files"><Lock size={18} /> فتح الملفات</Button>
+        <Button as={Link} to="/end-user/files"><Lock size={18} /> فتح الملفات</Button>
       </div>
       <section className="stitch-user-grid">
         <div className="stitch-user-hero">
@@ -50,7 +52,7 @@ function UserDashboard({ data, user }) {
           <div>
             <span>12 ملف</span>
             <span>3 اجتماعات</span>
-            <span>5 إشعارات</span>
+            <span>{notifications.filter((item) => item.unread).length} إشعارات</span>
           </div>
         </div>
         <div className="stitch-secure-card">
@@ -61,21 +63,21 @@ function UserDashboard({ data, user }) {
         <div className="stitch-user-list">
           <h2>أحدث الملفات</h2>
           {data.files.slice(0, 3).map((file) => (
-            <a href="/end-user/files" key={file.id}>
+            <Link to="/end-user/files" key={file.id}>
               <FileText size={20} />
               <span>{file.name}</span>
               <Badge tone="danger">Viewer only</Badge>
-            </a>
+            </Link>
           ))}
         </div>
         <div className="stitch-user-list">
           <h2>النشاطات</h2>
-          {data.notifications.slice(0, 3).map((item) => (
-            <a href={item.target} key={item.id}>
+          {notifications.slice(0, 3).map((item) => (
+            <Link to={item.target} key={item.id}>
               <Bell size={20} />
               <span>{item.title}</span>
               <small>{item.time}</small>
-            </a>
+            </Link>
           ))}
         </div>
       </section>
@@ -152,7 +154,8 @@ function MeetingsPage() {
   );
 }
 
-function NotificationsPage({ notifications }) {
+function NotificationsPage() {
+  const { notifications, unreadCount, markRead, markAllRead } = useNotifications();
   return (
     <>
       <div className="stitch-page-head">
@@ -160,18 +163,21 @@ function NotificationsPage({ notifications }) {
           <h1>الإشعارات</h1>
           <p>كل إشعار يفتح المكان المرتبط به.</p>
         </div>
+        {unreadCount > 0 && (
+          <Button onClick={markAllRead} variant="ghost"><CheckCheck size={16} /> تحديد الكل كمقروء</Button>
+        )}
       </div>
       <div className="stitch-notification-list">
         {notifications.map((item) => (
-          <a className="stitch-notification-item" href={item.target} key={item.id}>
+          <Link className="stitch-notification-item" to={item.target} key={item.id} onClick={() => markRead(item.id)}>
             <MessageSquare size={22} />
             <div>
               <strong>{item.title}</strong>
               <span>{item.body}</span>
               <small>{item.time}</small>
             </div>
-            <Badge tone={item.unread ? "primary" : "neutral"}>{item.type}</Badge>
-          </a>
+            <Badge tone={item.unread ? "primary" : "neutral"}>{item.unread ? "جديد" : item.type}</Badge>
+          </Link>
         ))}
       </div>
     </>

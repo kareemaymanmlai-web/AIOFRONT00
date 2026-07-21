@@ -1,11 +1,12 @@
-import { AlertTriangle, Bell, Building2, CreditCard, Download, MoreVertical, Plus, Shield, TrendingUp, Users } from "lucide-react";
+import { AlertTriangle, Building2, CheckCheck, CreditCard, Download, MessageSquare, MoreVertical, Plus, Shield, TrendingUp, Users } from "lucide-react";
 import { useState } from "react";
-import { Navigate, useParams } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { AccountSettings } from "../components/AccountSettings";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { FormField } from "../components/FormField";
 import { Modal } from "../components/Modal";
+import { useNotifications } from "../contexts/NotificationsContext";
 import { AppLayout } from "../layouts/AppLayout";
 import { api } from "../services/api";
 
@@ -29,14 +30,14 @@ export function SuperAdminApp({ data, user }) {
   }
 
   return (
-    <AppLayout appTitle="Super Admin" user={appUser} nav={nav} notifications={data.notifications}>
+    <AppLayout appTitle="Super Admin" user={appUser} nav={nav}>
       {page === "dashboard" && <Dashboard data={data} />}
       {page === "tenants" && <TenantsPage tenants={data.tenants} />}
       {page === "revenue" && <RevenuePage />}
       {page === "subscriptions" && <SubscriptionsPage tenants={data.tenants} />}
       {page === "pricing" && <Pricing />}
       {page === "activity" && <ActivityPage />}
-      {page === "notifications" && <NotificationsPage notifications={data.notifications} />}
+      {page === "notifications" && <NotificationsPage />}
       {page === "settings" && <AccountSettings user={user} workspaceLabel="Super Admin workspace" />}
     </AppLayout>
   );
@@ -237,26 +238,30 @@ function ActivityPage() {
   );
 }
 
-function NotificationsPage({ notifications }) {
+function NotificationsPage() {
+  const { notifications, unreadCount, markRead, markAllRead } = useNotifications();
   return (
     <>
       <div className="stitch-page-head">
         <div>
-          <h1>مركز الإشعارات</h1>
-          <p>تنبيهات تشغيلية على مستوى المنصة: التجديدات، المدفوعات، والأمان.</p>
+          <h1>الإشعارات</h1>
+          <p>تنبيهات على مستوى المنصة: الشركات، الاشتراكات، والأمان.</p>
         </div>
+        {unreadCount > 0 && (
+          <Button onClick={markAllRead} variant="ghost"><CheckCheck size={16} /> تحديد الكل كمقروء</Button>
+        )}
       </div>
       <div className="stitch-notification-list">
         {notifications.map((item) => (
-          <a className="stitch-notification-item" href={item.target} key={item.id}>
-            <Bell size={22} />
+          <Link className="stitch-notification-item" to={item.target} key={item.id} onClick={() => markRead(item.id)}>
+            <MessageSquare size={22} />
             <div>
               <strong>{item.title}</strong>
               <span>{item.body}</span>
               <small>{item.time}</small>
             </div>
-            <Badge tone={item.type === "Security" ? "danger" : "primary"}>{item.type}</Badge>
-          </a>
+            <Badge tone={item.unread ? "primary" : "neutral"}>{item.unread ? "جديد" : item.type}</Badge>
+          </Link>
         ))}
       </div>
     </>

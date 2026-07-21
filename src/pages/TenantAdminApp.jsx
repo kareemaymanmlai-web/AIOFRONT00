@@ -4,6 +4,7 @@ import {
   Bell,
   BookOpen,
   Building2,
+  CheckCheck,
   Cloud,
   CloudUpload,
   Download,
@@ -23,12 +24,13 @@ import {
   Users
 } from "lucide-react";
 import { useState } from "react";
-import { Navigate, useParams } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { AccountSettings } from "../components/AccountSettings";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { FormField } from "../components/FormField";
 import { Modal } from "../components/Modal";
+import { useNotifications } from "../contexts/NotificationsContext";
 import { AppLayout } from "../layouts/AppLayout";
 import { api } from "../services/api";
 
@@ -53,12 +55,12 @@ export function TenantAdminApp({ data, user }) {
   }
 
   return (
-    <AppLayout appTitle="Tenant Admin" user={appUser} nav={nav} notifications={data.notifications}>
+    <AppLayout appTitle="Tenant Admin" user={appUser} nav={nav}>
       {page === "dashboard" && <Dashboard data={data} />}
       {page === "rooms" && <RoomsPage rooms={data.rooms} />}
       {page === "files" && <ContentLibrary files={data.files} />}
       {page === "members" && <MembersPage members={data.members} />}
-      {page === "notifications" && <NotificationsPage notifications={data.notifications} />}
+      {page === "notifications" && <NotificationsPage />}
       {page === "analytics" && <AnalyticsPage />}
       {page === "security" && <SecurityPage />}
       {page === "subscription" && <SubscriptionPage />}
@@ -288,7 +290,8 @@ function MembersPage({ members }) {
   );
 }
 
-function NotificationsPage({ notifications }) {
+function NotificationsPage() {
+  const { notifications, unreadCount, markRead, markAllRead } = useNotifications();
   return (
     <>
       <div className="stitch-page-head">
@@ -296,11 +299,13 @@ function NotificationsPage({ notifications }) {
           <h1>مركز الإشعارات</h1>
           <p>كل إشعار مرتبط بالمكان الصحيح لمتابعة السبب أو تنفيذ الإجراء.</p>
         </div>
-        <Button variant="ghost">تحديد الكل كمقروء</Button>
+        {unreadCount > 0 && (
+          <Button onClick={markAllRead} variant="ghost"><CheckCheck size={16} /> تحديد الكل كمقروء</Button>
+        )}
       </div>
       <div className="stitch-notification-list">
         {notifications.map((item) => (
-          <a className="stitch-notification-item" href={item.target} key={item.id}>
+          <Link className="stitch-notification-item" to={item.target} key={item.id} onClick={() => markRead(item.id)}>
             <Bell size={22} />
             <div>
               <strong>{item.title}</strong>
@@ -308,7 +313,7 @@ function NotificationsPage({ notifications }) {
               <small>{item.time}</small>
             </div>
             <Badge tone={item.type === "Security" ? "danger" : "primary"}>{item.type}</Badge>
-          </a>
+          </Link>
         ))}
       </div>
     </>

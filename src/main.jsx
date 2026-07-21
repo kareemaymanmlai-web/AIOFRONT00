@@ -4,6 +4,7 @@ import { App } from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { AuthProvider } from "./contexts/AuthContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
+import { NotificationsProvider } from "./contexts/NotificationsContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ToastProvider } from "./contexts/ToastContext";
 import "./styles.css";
@@ -15,7 +16,9 @@ createRoot(document.getElementById("root")).render(
         <ThemeProvider>
           <ToastProvider>
             <AuthProvider>
-              <App />
+              <NotificationsProvider>
+                <App />
+              </NotificationsProvider>
             </AuthProvider>
           </ToastProvider>
         </ThemeProvider>
